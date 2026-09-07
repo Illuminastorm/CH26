@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "accel": "node server/index.mjs",
+    "start": "node server/cloud.mjs",
     "test:fuse": "node server/fuse.test.mjs",
     "test:shake": "node server/shake-guard.test.mjs"
   },

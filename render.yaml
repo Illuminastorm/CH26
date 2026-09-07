@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: accel-bridge
+    runtime: node
+    plan: free
+    buildCommand: ""
+    startCommand: node server/cloud.mjs
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
