@@ -143,5 +143,5 @@ attachWebSocket(server, (ws) => {
 const round = (v) => (v === null || v === undefined ? null : Math.round(v * 1e4) / 1e4);
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`accel-bridge listening on :${PORT}`);
+  console.log(`andescendants listening on :${PORT}`);
 });

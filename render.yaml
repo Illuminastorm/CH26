@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: accel-bridge
+    name: andescendants
     runtime: node
     plan: free
     buildCommand: ""
