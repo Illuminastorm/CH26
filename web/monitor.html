@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Accel Bridge — Laptop</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 28px; background: #0d0f13; color: #e8eaed;
+         font: 14px/1.5 system-ui, sans-serif; }
+  h1 { font-size: 17px; margin: 0 0 2px; }
+  .sub { color: #8b939e; margin-bottom: 22px; font-size: 13px; }
+  canvas { width: 100%; height: 320px; background: #12151b; border-radius: 10px;
+           display: block; margin-bottom: 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .card { background: #12151b; border-radius: 10px; padding: 14px 16px; }
+  .card b { display: block; font-size: 24px; font-variant-numeric: tabular-nums; }
+  .card span { color: #8b939e; font-size: 12px; }
+  .legend span { margin-right: 16px; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>Accelerometer stream</h1>
+  <div class="sub" id="status">waiting for a phone…</div>
+  <div class="legend">
+    <span style="color:#f87171">■ X</span>
+    <span style="color:#34d399">■ Y</span>
+    <span style="color:#60a5fa">■ Z</span>
+    <span style="color:#6b7280">— faint = raw, bright = fused</span>
+  </div>
+  <canvas id="c"></canvas>
+  <div class="grid">
+    <div class="card"><span>X</span><b id="x">—</b></div>
+    <div class="card"><span>Y</span><b id="y">—</b></div>
+    <div class="card"><span>Z</span><b id="z">—</b></div>
+    <div class="card"><span>Magnitude |a|</span><b id="m">—</b></div>
+    <div class="card"><span>Hardware weight</span><b id="w">—</b></div>
+    <div class="card"><span>Gravity error</span><b id="ge">—</b></div>
+    <div class="card"><span>Quality</span><b id="q">—</b></div>
+    <div class="card"><span>Rate</span><b id="hz">—</b></div>
+    <div class="card"><span>Samples</span><b id="n">0</b></div>
+  </div>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const canvas = $('c');
+const ctx = canvas.getContext('2d');
+const RANGE = 12;       // m/s^2 full scale
+const KEEP = 600;       // samples of history
+const series = { x: [], y: [], z: [] };
+const fusedSeries = { x: [], y: [], z: [] };
+let n = 0, times = [];
+
+function fit() {
+  const dpr = devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * dpr;
+  canvas.height = canvas.clientHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+addEventListener('resize', fit); fit();
+
+function connect() {
+  const ws = new WebSocket(`wss://${location.host}/monitor`);
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'hello') { $('status').textContent = `${msg.platform} — ${msg.impl}`; return; }
+    if (msg.type === 'status') {
+      if (!msg.connected) $('status').textContent = 'phone disconnected';
+      return;
+    }
+    if (msg.type !== 'accel') return;
+
+    for (const k of ['x', 'y', 'z']) {
+      // Raw is gravity-inclusive; subtract the fused gravity-free signal's
+      // frame by plotting raw motion only, so both traces are comparable.
+      series[k].push(msg[k]);
+      fusedSeries[k].push(msg['f' + k]);
+      if (series[k].length > KEEP) series[k].shift();
+      if (fusedSeries[k].length > KEEP) fusedSeries[k].shift();
+    }
+    n++;
+    times.push(performance.now());
+    if (times.length > 60) times.shift();
+
+    $('x').textContent = msg.fx.toFixed(2);
+    $('y').textContent = msg.fy.toFixed(2);
+    $('z').textContent = msg.fz.toFixed(2);
+    $('m').textContent = msg.fmag.toFixed(2);
+    $('w').textContent = `${(msg.hwWeight * 100).toFixed(0)}%`;
+    $('ge').textContent = msg.gErr.toFixed(3);
+    $('q').textContent = !msg.settled ? 'settling…'
+      : msg.sources === 2 ? 'good (2 sensors)' : 'single sensor';
+    $('q').style.color = !msg.settled ? '#f59e0b' : msg.sources === 2 ? '#34d399' : '#e8eaed';
+    $('n').textContent = n;
+    if (times.length > 1) {
+      const hz = (times.length - 1) / ((times.at(-1) - times[0]) / 1000);
+      $('hz').textContent = `${hz.toFixed(0)} Hz`;
+    }
+  };
+  ws.onclose = () => { $('status').textContent = 'server link lost — retrying'; setTimeout(connect, 1000); };
+}
+connect();
+
+function draw() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.strokeStyle = '#232830';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = (h / 4) * i;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+
+  const colors = { x: '#f87171', y: '#34d399', z: '#60a5fa' };
+  // Raw underneath at low opacity, fused on top: the gap between them is the
+  // noise the filter removed.
+  for (const [set, alpha, width] of [[series, 0.22, 1], [fusedSeries, 1, 1.8]]) {
+    for (const k of ['x', 'y', 'z']) {
+      const data = set[k];
+      if (data.length < 2) continue;
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = colors[k];
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      data.forEach((v, i) => {
+        if (v == null) return;
+        const px = (i / (KEEP - 1)) * w;
+        const py = h / 2 - (v / RANGE) * h;
+        i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+      });
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

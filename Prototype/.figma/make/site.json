@@ -1,0 +1,10 @@
+{
+  "description": "Experience a nostalgic 90s Nintendo-style interface that enhances user engagement with intuitive navigation and vibrant design for retro gaming enthusiasts.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

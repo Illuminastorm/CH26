@@ -1,0 +1,210 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
+@import 'tailwindcss';
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --background: #0a0a1a;
+  --foreground: #f0f0f0;
+  --card: #1a1a3e;
+  --card-foreground: #ffffff;
+  --primary: #e83030;
+  --primary-foreground: #ffffff;
+  --secondary: #2a2a5e;
+  --secondary-foreground: #f0f0f0;
+  --muted: #111130;
+  --muted-foreground: #8888cc;
+  --accent: #f8d800;
+  --accent-foreground: #0a0a1a;
+  --border: #3a3a8e;
+  --ring: #f8d800;
+  --radius: 0px;
+}
+
+* {
+  image-rendering: pixelated;
+}
+
+body {
+  font-family: 'Press Start 2P', monospace;
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow: hidden;
+}
+
+/* CRT scanlines */
+.crt::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.15) 2px,
+    rgba(0, 0, 0, 0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* CRT vignette */
+.crt::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* Pixel border style */
+.pixel-border {
+  box-shadow:
+    -4px 0 0 0 #3a3a8e,
+    4px 0 0 0 #3a3a8e,
+    0 -4px 0 0 #3a3a8e,
+    0 4px 0 0 #3a3a8e;
+}
+
+.pixel-border-yellow {
+  box-shadow:
+    -4px 0 0 0 #f8d800,
+    4px 0 0 0 #f8d800,
+    0 -4px 0 0 #f8d800,
+    0 4px 0 0 #f8d800;
+}
+
+/* Hard shadow button */
+.btn-pixel {
+  position: relative;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 4px 4px 0px var(--primary-shadow);
+  transition: transform 0.05s, box-shadow 0.05s;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.btn-pixel:hover {
+  box-shadow: 6px 6px 0px var(--primary-shadow);
+  transform: translate(-1px, -1px);
+}
+
+.btn-pixel:active {
+  box-shadow: 1px 1px 0px var(--primary-shadow);
+  transform: translate(3px, 3px);
+}
+
+.btn-pixel-blue {
+  background: var(--highlight);
+  color: var(--background);
+  box-shadow: 4px 4px 0px var(--border);
+}
+
+.btn-pixel-blue:hover {
+  box-shadow: 6px 6px 0px var(--border);
+}
+
+.btn-pixel-blue:active {
+  box-shadow: 1px 1px 0px var(--border);
+}
+
+.btn-pixel-yellow {
+  background: var(--accent);
+  color: var(--background);
+  box-shadow: 4px 4px 0px var(--accent-dark);
+}
+
+.btn-pixel-yellow:hover {
+  box-shadow: 6px 6px 0px var(--accent-dark);
+}
+
+.btn-pixel-yellow:active {
+  box-shadow: 1px 1px 0px var(--accent-dark);
+}
+
+.btn-pixel-green {
+  background: var(--border);
+  box-shadow: 4px 4px 0px var(--surface-active);
+}
+
+.btn-pixel-green:hover {
+  box-shadow: 6px 6px 0px var(--surface-active);
+}
+
+/* Blinking cursor animation */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Star twinkle */
+@keyframes twinkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+/* Scroll for marquee */
+@keyframes marquee {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-100%); }
+}
+
+.marquee {
+  animation: marquee 18s linear infinite;
+}
+
+/* Float animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Screen flicker on load */
+@keyframes flicker {
+  0% { opacity: 0; }
+  5% { opacity: 1; }
+  10% { opacity: 0.3; }
+  15% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+.flicker {
+  animation: flicker 0.6s ease-in forwards;
+}
+
+/* Pulse glow */
+@keyframes glow {
+  0%, 100% { text-shadow: 0 0 4px currentColor, 0 0 8px currentColor; }
+  50% { text-shadow: 0 0 12px currentColor, 0 0 24px currentColor, 0 0 40px currentColor; }
+}
+
+.glow-text {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Menu item selected state */
+.menu-item-selected {
+  background: #1a1a5e;
+  border-left: 8px solid #f8d800;
+}
+
+/* Scrollbar hide */
+::-webkit-scrollbar { display: none; }

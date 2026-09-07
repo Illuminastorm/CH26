@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Accel Bridge — Phone</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+    font: 15px/1.5 -apple-system, system-ui, sans-serif;
+    background: #101216; color: #e8eaed;
+  }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  .sub { color: #8b939e; font-size: 13px; margin-bottom: 20px; }
+  button {
+    width: 100%; padding: 18px; font-size: 17px; font-weight: 600;
+    border: 0; border-radius: 12px; background: #3b82f6; color: #fff;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:disabled { background: #2a2f38; color: #6b7280; }
+  .row { display: flex; justify-content: space-between; padding: 9px 0;
+         border-bottom: 1px solid #21262e; font-variant-numeric: tabular-nums; }
+  .row span:first-child { color: #8b939e; }
+  .axis { font-size: 26px; font-weight: 600; text-align: center; padding: 10px 0; }
+  .axis small { display: block; font-size: 11px; color: #8b939e; font-weight: 400; }
+  .axes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+          margin: 18px 0; background: #171a20; border-radius: 12px; padding: 8px; }
+  #note { margin-top: 16px; font-size: 13px; color: #f59e0b; min-height: 20px; }
+  .ok { color: #34d399 !important; }
+  section { margin-top: 22px; }
+  label { font-size: 13px; color: #8b939e; }
+  .gamelink { display: block; padding: 14px; border-radius: 12px; background: #171a20;
+              border: 1px solid #2a2f38; color: #e8eaed; text-decoration: none;
+              text-align: center; font-weight: 600; }
+  select { width: 100%; padding: 10px; margin-top: 6px; border-radius: 8px;
+           background: #171a20; color: #e8eaed; border: 1px solid #2a2f38; font-size: 15px; }
+</style>
+</head>
+<body>
+  <h1>Accelerometer Bridge</h1>
+  <div class="sub">Streaming to your laptop over WiFi</div>
+
+  <button id="go">Start streaming</button>
+  <div id="note"></div>
+
+  <div class="axes">
+    <div class="axis"><span id="x">—</span><small>X m/s²</small></div>
+    <div class="axis"><span id="y">—</span><small>Y m/s²</small></div>
+    <div class="axis"><span id="z">—</span><small>Z m/s²</small></div>
+  </div>
+
+  <section>
+    <div class="row"><span>Link</span><span id="link">connecting…</span></div>
+    <div class="row"><span>Implementation</span><span id="impl">—</span></div>
+    <div class="row"><span>Source</span><span id="src">—</span></div>
+    <div class="row"><span>Rate</span><span id="hz">—</span></div>
+    <div class="row"><span>Sent / dropped</span><span id="counts">0 / 0</span></div>
+  </section>
+
+  <section>
+    <label for="player">Player slot</label>
+    <select id="player">
+      <option value="1">Player 1</option>
+      <option value="2">Player 2</option>
+    </select>
+  </section>
+
+  <section>
+    <label for="pick">Capture implementation</label>
+    <select id="pick">
+      <option value="auto">Auto-detect</option>
+      <option value="android">Force Android (Generic Sensor API)</option>
+      <option value="ios">Force iOS (devicemotion)</option>
+    </select>
+  </section>
+
+  <section>
+    <a href="/boxing.html" class="gamelink">Open Punch Off on the laptop</a>
+  </section>
+
+  <script type="module" src="/phone.js"></script>
+</body>
+</html>

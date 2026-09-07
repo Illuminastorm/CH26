@@ -1,0 +1,1847 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a1a">
+<title>Punch Off — GO-TION</title>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
+  :root {
+    color-scheme: dark;
+    --background: #0a0a1a;
+    --foreground: #f0f0f0;
+    --surface: #0d0d2a;
+    --surface-active: #1a1a5e;
+    --border: #3a3a8e;
+    --accent: #f8d800;
+    --accent-dark: #7a5000;
+    --muted: #8888cc;
+    --highlight: #76d7ff;
+    --primary: #e83030;
+    --primary-shadow: #7a0000;
+    --grid: #3a3a8e;
+  }
+
+  * { box-sizing: border-box; }
+  html { min-height: 100%; background: var(--background); }
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: "Press Start 2P", ui-monospace, "Cascadia Code", monospace;
+    font-size: 12px;
+    overflow-x: hidden;
+  }
+
+  button, select, input { font: inherit; }
+  button { -webkit-tap-highlight-color: transparent; }
+  button:focus-visible, select:focus-visible, input:focus-visible {
+    outline: 3px solid var(--highlight);
+    outline-offset: 3px;
+  }
+  button:disabled { cursor: not-allowed; opacity: .45; }
+  [hidden] { display: none !important; }
+
+  #app {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  #stars, .grid-bg { position: fixed; inset: 0; pointer-events: none; }
+  #stars { z-index: -2; overflow: hidden; }
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    animation: twinkle var(--duration) var(--delay) ease-in-out infinite;
+  }
+  .grid-bg {
+    z-index: -1;
+    opacity: .13;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .crt::after {
+    content: "";
+    position: fixed;
+    z-index: 20;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, .16) 2px,
+      rgba(0, 0, 0, .16) 4px
+    );
+  }
+  .crt::before {
+    content: "";
+    position: fixed;
+    z-index: 19;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 58%, rgba(0, 0, 0, .62) 100%);
+  }
+
+  .splash {
+    position: fixed;
+    z-index: 100;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: var(--background);
+  }
+  .splash-copy { text-align: center; }
+  .splash h1 {
+    margin: 0;
+    color: var(--accent);
+    font-size: clamp(24px, 5vw, 52px);
+    line-height: 1.55;
+    text-shadow: 4px 4px 0 var(--accent-dark);
+  }
+  .splash p { margin: 18px 0 0; color: var(--foreground); font-size: 10px; }
+
+  .topbar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 54px;
+    padding: 10px clamp(14px, 3vw, 34px);
+    border-bottom: 4px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 90%, #000);
+  }
+  .brand {
+    color: var(--accent);
+    font-size: clamp(10px, 1.8vw, 15px);
+    letter-spacing: 1px;
+  }
+  .link-summary {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    max-width: 62vw;
+    color: var(--muted);
+    font-size: 7px;
+    line-height: 1.5;
+    text-align: right;
+  }
+  .link-light {
+    flex: 0 0 auto;
+    width: 9px;
+    height: 9px;
+    background: #69717e;
+    box-shadow: 0 0 0 2px rgba(105, 113, 126, .25);
+  }
+  .link-summary.ready .link-light {
+    background: #53e87a;
+    box-shadow: 0 0 10px #53e87a;
+  }
+  .link-summary.problem .link-light {
+    background: var(--primary);
+    box-shadow: 0 0 10px var(--primary);
+  }
+  .home-button {
+    margin: 0;
+    padding: 7px 10px;
+    color: var(--background);
+    background: var(--accent);
+    border: 0;
+    cursor: pointer;
+    font-size: 7px;
+  }
+
+  .marquee-wrap {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    border-bottom: 4px solid var(--accent);
+    padding: 7px 0;
+    background: rgba(0, 0, 0, .22);
+    color: var(--accent);
+    font-size: 7px;
+    white-space: nowrap;
+  }
+  .marquee {
+    display: inline-block;
+    min-width: 100%;
+    animation: marquee 28s linear infinite;
+  }
+
+  .screen {
+    position: relative;
+    z-index: 1;
+    width: min(1120px, 100%);
+    margin: auto;
+    padding: clamp(24px, 5vw, 58px) clamp(16px, 4vw, 48px);
+  }
+  .screen-heading {
+    margin: 0 0 12px;
+    color: var(--accent);
+    font-size: clamp(16px, 3vw, 28px);
+    line-height: 1.5;
+    text-align: center;
+    text-shadow: 4px 4px 0 var(--accent-dark);
+  }
+  .screen-subheading {
+    max-width: 740px;
+    margin: 0 auto 30px;
+    color: var(--highlight);
+    font-size: 8px;
+    line-height: 2;
+    text-align: center;
+  }
+
+  .menu-screen {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+    align-items: center;
+    gap: clamp(28px, 6vw, 80px);
+    flex: 1;
+  }
+  .game-logo { text-align: center; }
+  .game-logo h1 {
+    margin: 0;
+    color: var(--accent);
+    font-size: clamp(35px, 7vw, 78px);
+    line-height: 1.25;
+    letter-spacing: 3px;
+    text-shadow: 6px 6px 0 var(--accent-dark);
+  }
+  .game-logo .edition {
+    margin-top: 17px;
+    color: var(--highlight);
+    font-size: 8px;
+    letter-spacing: 3px;
+  }
+  .game-logo .tagline {
+    max-width: 540px;
+    margin: 28px auto 0;
+    color: var(--muted);
+    font-size: 8px;
+    line-height: 2.15;
+  }
+  .pixel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 22px;
+  }
+  .pixel-dots i { width: 10px; height: 10px; background: var(--primary); }
+  .pixel-dots i:nth-child(2) { background: var(--accent); }
+  .pixel-dots i:nth-child(3) { background: var(--highlight); }
+  .pixel-dots i:nth-child(4) { background: var(--border); }
+
+  .menu-panel, .panel {
+    border: 4px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 92%, #000);
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, .34);
+  }
+  .menu-panel { padding: 18px; }
+  .menu-button, .arcade-button, .choice-button, .world-button, .character-button {
+    border: 0;
+    border-radius: 0;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .menu-button {
+    position: relative;
+    display: block;
+    width: 100%;
+    margin: 0 0 13px;
+    padding: 17px 18px 17px 28px;
+    color: #fff;
+    background: var(--primary);
+    box-shadow: 4px 4px 0 var(--primary-shadow);
+    font-size: 9px;
+    line-height: 1.5;
+    text-align: left;
+    transition: transform .08s, box-shadow .08s;
+  }
+  .menu-button:nth-child(2) {
+    color: var(--background);
+    background: var(--accent);
+    box-shadow: 4px 4px 0 var(--accent-dark);
+  }
+  .menu-button:nth-child(3) {
+    color: var(--background);
+    background: var(--highlight);
+    box-shadow: 4px 4px 0 var(--border);
+  }
+  .menu-button:nth-child(4) {
+    background: var(--border);
+    box-shadow: 4px 4px 0 var(--surface-active);
+  }
+  .menu-button:last-child { margin-bottom: 0; }
+  .menu-button:hover, .menu-button.keyboard-focus {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--primary-shadow);
+  }
+  .menu-button:nth-child(2):hover, .menu-button:nth-child(2).keyboard-focus { box-shadow: 6px 6px 0 var(--accent-dark); }
+  .menu-button:nth-child(3):hover, .menu-button:nth-child(3).keyboard-focus { box-shadow: 6px 6px 0 var(--border); }
+  .menu-button:nth-child(4):hover, .menu-button:nth-child(4).keyboard-focus { box-shadow: 6px 6px 0 var(--surface-active); }
+  .menu-button.keyboard-focus::before {
+    content: ">";
+    position: absolute;
+    left: 9px;
+    color: currentColor;
+    animation: blink 1s step-end infinite;
+  }
+
+  .connection-panel {
+    margin-top: 25px;
+    padding: 16px;
+    border: 3px solid var(--border);
+    background: var(--background);
+  }
+  .panel-label { color: var(--highlight); font-size: 7px; }
+  .connection-copy {
+    min-height: 34px;
+    margin: 11px 0 0;
+    color: var(--muted);
+    font-size: 7px;
+    line-height: 2;
+  }
+  .connection-copy.ready { color: #65ef91; }
+  .phone-note {
+    margin-top: 11px;
+    color: var(--muted);
+    font-size: 6px;
+    line-height: 1.8;
+  }
+
+  .world-grid, .mode-grid, .character-grid {
+    display: grid;
+    gap: 14px;
+  }
+  .world-grid { grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); }
+  .world-button {
+    min-height: 104px;
+    padding: 17px;
+    color: var(--foreground);
+    border: 4px solid var(--border);
+    background: var(--surface);
+    box-shadow: 5px 5px 0 rgba(0, 0, 0, .32);
+    font-size: 8px;
+    line-height: 1.75;
+    text-align: left;
+  }
+  .world-button small { display: block; margin-top: 12px; color: var(--muted); font-size: 6px; }
+  .world-button:hover, .world-button.selected, .world-button.keyboard-focus {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--surface-active);
+    transform: translate(-2px, -2px);
+  }
+  .world-button.selected::before { content: "> "; }
+
+  .mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 840px; margin: 0 auto; }
+  .choice-button {
+    min-height: 270px;
+    padding: 24px;
+    color: var(--foreground);
+    border: 4px solid var(--border);
+    background: var(--surface);
+    text-align: center;
+    transition: transform .08s, border-color .08s;
+  }
+  .choice-button:hover, .choice-button.keyboard-focus {
+    border-color: var(--accent);
+    background: var(--surface-active);
+    transform: translate(-3px, -3px);
+    box-shadow: 7px 7px 0 var(--primary);
+  }
+  .choice-icon {
+    display: grid;
+    width: clamp(64px, 9vw, 94px);
+    aspect-ratio: 1;
+    place-items: center;
+    margin: 0 auto;
+    color: var(--accent);
+    border: 4px solid currentColor;
+    box-shadow: 5px 5px 0 var(--accent-dark);
+    font-size: clamp(18px, 3vw, 31px);
+    line-height: 1;
+  }
+  .choice-name { display: block; margin-top: 25px; color: var(--accent); font-size: clamp(10px, 2vw, 15px); }
+  .choice-description { display: block; margin-top: 20px; color: var(--highlight); font-size: 7px; line-height: 2; }
+  .choice-detail { display: block; margin-top: 20px; color: var(--muted); font-size: 6px; line-height: 1.9; }
+
+  .fighter-slots {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: stretch;
+    gap: 18px;
+    max-width: 790px;
+    margin: 0 auto 25px;
+  }
+  .fighter-slot {
+    min-height: 106px;
+    padding: 16px;
+    border: 3px solid var(--border);
+    background: var(--surface);
+    text-align: center;
+  }
+  .fighter-slot strong { display: block; color: var(--highlight); font-size: 7px; }
+  .fighter-slot span { display: block; min-height: 35px; margin-top: 17px; color: var(--muted); font-size: 8px; line-height: 1.7; }
+  .fighter-slot.filled { border-color: var(--accent); background: var(--surface-active); }
+  .fighter-slot.filled span { color: var(--accent); }
+  .vs-mark { align-self: center; color: var(--primary); font-size: clamp(20px, 4vw, 35px); }
+
+  .character-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 860px; margin: 0 auto; }
+  .character-button {
+    position: relative;
+    min-height: 180px;
+    padding: 16px 10px;
+    overflow: hidden;
+    color: var(--foreground);
+    border: 3px solid var(--border);
+    background: var(--background);
+    transition: transform .08s, border-color .08s;
+  }
+  .character-button::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 9px;
+    background: var(--character-color);
+  }
+  .character-button:hover, .character-button.selected, .character-button.keyboard-focus {
+    border-color: var(--accent);
+    background: var(--surface-active);
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--character-color);
+  }
+  .fighter-sprite {
+    display: block;
+    width: 100px;
+    height: 100px;
+    background-image: var(--idle-sheet);
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    background-size: var(--idle-size) 100%;
+    image-rendering: pixelated;
+    /* Hold the idle pose; movement is reserved for a scored peak attack. */
+    animation: none;
+  }
+  .sprite-soldier { --idle-sheet: url("/assets/tiny-rpg/soldier-idle.png"); --idle-size: 600%; --idle-frames: 6; --walk-sheet: url("/assets/tiny-rpg/soldier-walk.png"); --walk-size: 800%; --walk-frames: 8; --attack-sheet: url("/assets/tiny-rpg/soldier-attack.png"); --attack-size: 900%; --attack-frames: 9; }
+  .sprite-orc { --idle-sheet: url("/assets/tiny-rpg/orc-idle.png"); --idle-size: 600%; --idle-frames: 6; --walk-sheet: url("/assets/tiny-rpg/orc-walk.png"); --walk-size: 800%; --walk-frames: 8; --attack-sheet: url("/assets/tiny-rpg/orc-attack.png"); --attack-size: 600%; --attack-frames: 6; }
+  .sprite-demon { --idle-sheet: url("/assets/tiny-rpg/demon-idle.png"); --idle-size: 600%; --idle-frames: 6; --walk-sheet: url("/assets/tiny-rpg/demon-walk.png"); --walk-size: 800%; --walk-frames: 8; --attack-sheet: url("/assets/tiny-rpg/demon-attack.png"); --attack-size: 700%; --attack-frames: 7; }
+  .sprite-blood { --idle-sheet: url("/assets/tiny-rpg/blood-idle.png"); --idle-size: 600%; --idle-frames: 6; --walk-sheet: url("/assets/tiny-rpg/blood-walk.png"); --walk-size: 800%; --walk-frames: 8; --attack-sheet: url("/assets/tiny-rpg/blood-attack.png"); --attack-size: 800%; --attack-frames: 8; }
+  .character-sprite {
+    width: 92px;
+    height: 92px;
+    margin: 14px auto 0;
+    filter: drop-shadow(3px 4px 0 rgba(0, 0, 0, .55));
+    transform: scale(3);
+    /* Roster fighters breathe on their idle loop; the arena pair stays posed. */
+    animation: sprite-idle .78s steps(var(--idle-frames), jump-none) infinite;
+  }
+  /* Offset the loops so the roster does not bob in lockstep. */
+  .character-button:nth-child(2) .character-sprite { animation-delay: -.19s; }
+  .character-button:nth-child(3) .character-sprite { animation-delay: -.39s; }
+  .character-button:nth-child(4) .character-sprite { animation-delay: -.58s; }
+  .character-name { display: block; margin-top: 19px; font-size: 8px; }
+  .character-ready { display: block; min-height: 14px; margin-top: 15px; color: var(--accent); font-size: 6px; }
+  .selection-hint {
+    margin: 20px auto 0;
+    color: var(--muted);
+    font-size: 6px;
+    line-height: 2;
+    text-align: center;
+  }
+
+  .button-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 30px;
+  }
+  .arcade-button {
+    min-height: 46px;
+    padding: 14px 18px;
+    color: #fff;
+    background: var(--primary);
+    box-shadow: 4px 4px 0 var(--primary-shadow);
+    font-size: 8px;
+    line-height: 1.45;
+    transition: transform .08s, box-shadow .08s;
+  }
+  .arcade-button:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--primary-shadow);
+  }
+  .arcade-button.secondary { color: var(--background); background: var(--accent); box-shadow: 4px 4px 0 var(--accent-dark); }
+  .arcade-button.secondary:hover:not(:disabled) { box-shadow: 6px 6px 0 var(--accent-dark); }
+  .arcade-button.ghost { color: var(--foreground); background: var(--surface); box-shadow: 4px 4px 0 var(--border); }
+  .arcade-button.ghost:hover:not(:disabled) { box-shadow: 6px 6px 0 var(--border); }
+
+  .settings-panel, .credits-panel {
+    width: min(590px, 100%);
+    margin: 0 auto;
+    padding: clamp(20px, 4vw, 36px);
+  }
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 0;
+    border-bottom: 2px solid var(--border);
+    color: var(--foreground);
+    font-size: 8px;
+  }
+  .settings-row:last-of-type { border-bottom: 0; }
+  .settings-row label { display: block; }
+  .settings-row output { color: var(--accent); }
+  .settings-row input[type="range"] { width: min(250px, 44vw); accent-color: var(--accent); }
+  .toggle-button {
+    min-width: 76px;
+    padding: 9px 12px;
+    color: var(--background);
+    border: 2px solid var(--border);
+    background: var(--accent);
+    cursor: pointer;
+    font-size: 7px;
+  }
+  .toggle-button.off { color: var(--muted); background: var(--surface-active); }
+  .credits-panel { text-align: center; }
+  .credits-panel p { color: var(--highlight); font-size: 8px; line-height: 2.2; }
+  .credits-panel .thanks { color: var(--muted); font-size: 6px; }
+
+  .game-screen { padding-top: clamp(20px, 3vw, 34px); }
+  .game-shell {
+    max-width: 970px;
+    margin: 0 auto;
+    padding: clamp(17px, 3vw, 31px);
+    border: 4px solid var(--accent);
+    background: color-mix(in srgb, var(--background) 85%, var(--surface));
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, .35);
+  }
+  .game-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--border);
+    font-size: 7px;
+    line-height: 1.75;
+  }
+  .game-type-tag { color: var(--highlight); }
+  .game-ready-copy { color: var(--accent); text-align: right; }
+  .scoreboard {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(14px, 3vw, 28px);
+    margin: clamp(20px, 4vw, 35px) 0 22px;
+  }
+  .player {
+    /* --flip orients the sprite sheet; --advance is how far this fighter steps
+       toward the centre of the arena during a peak cutscene, measured from the
+       card width in triggerPeakAttack and written back as an inline style.
+       Both live on the card so the PEAK! callout travels with the fighter. */
+    --flip: 1;
+    --advance: 0px;
+    position: relative;
+    min-height: 258px;
+    padding: 18px;
+    overflow: hidden;
+    border: 4px solid var(--border);
+    background: var(--surface);
+    text-align: center;
+    transition: background .12s, border-color .12s, transform .12s;
+  }
+  .player.active {
+    border-color: var(--accent);
+    background: var(--surface-active);
+    transform: translateY(-3px);
+    box-shadow: 0 0 0 3px rgba(248, 216, 0, .18), 6px 6px 0 var(--accent-dark);
+  }
+  .player.active::after {
+    content: "PUNCH NOW";
+    position: absolute;
+    inset: 11px 0 auto;
+    color: var(--accent);
+    font-size: 6px;
+    animation: blink .7s step-end infinite;
+  }
+  .player .player-role { color: var(--highlight); font-size: 7px; }
+  .player .arena-sprite {
+    width: clamp(100px, 15vw, 150px);
+    height: clamp(100px, 15vw, 150px);
+    margin: 16px auto 8px;
+    filter: drop-shadow(5px 6px 0 rgba(0, 0, 0, .55));
+    transform: translateX(0) scale(3.5) scaleX(var(--flip));
+  }
+  /* The sheets all face right, so mirror player two to square the two fighters up
+     and send its advance the other way.  The shadow offset is negated in local
+     space to keep one light direction on screen.  No transform is set here: it
+     stays on the shared class rule so the cinematic selectors can out-rank it. */
+  #p2 { --flip: -1; }
+  #p2 .arena-sprite { filter: drop-shadow(-5px 6px 0 rgba(0, 0, 0, .55)); }
+
+  /* A scored peak plays as a cutscene with the round clock stopped: the fighter
+     walks out of its card, swings, then walks back in.  The card stops clipping
+     for the duration and lifts above its neighbour so the walk-out stays whole. */
+  .player.cinematic { overflow: visible; z-index: 3; }
+  .player.cinematic::after { display: none; }
+  .player.walk-out .fighter-sprite,
+  .player.walk-back .fighter-sprite {
+    background-image: var(--walk-sheet);
+    background-size: var(--walk-size) 100%;
+  }
+  .player.walk-out .fighter-sprite {
+    animation: sprite-walk .48s steps(var(--walk-frames), jump-none) infinite,
+               fighter-step-out .96s linear 1 both;
+  }
+  /* Walking home means facing the other way, so the return leg flips the sheet. */
+  .player.walk-back .fighter-sprite {
+    animation: sprite-walk .48s steps(var(--walk-frames), jump-none) infinite,
+               fighter-step-back .96s linear 1 both;
+  }
+  .player.strike .fighter-sprite {
+    background-image: var(--attack-sheet);
+    background-size: var(--attack-size) 100%;
+    animation: sprite-attack .56s steps(var(--attack-frames), jump-none) 1 both;
+  }
+  /* No transform animation on the strike, so this holds the stepped-out spot. */
+  .player.strike .arena-sprite { transform: translateX(var(--advance)) scale(3.5) scaleX(var(--flip)); }
+  .player.strike::before {
+    content: "PEAK!";
+    position: absolute;
+    z-index: 1;
+    top: 35%;
+    left: calc(50% + var(--advance));
+    color: var(--accent);
+    font-size: clamp(10px, 2.2vw, 17px);
+    text-shadow: 3px 3px 0 var(--primary-shadow);
+    animation: peak-callout .56s steps(2) both;
+  }
+  .player.strike { animation: impact-flash .56s steps(2) both; }
+  .player .name { min-height: 21px; color: var(--accent); font-size: clamp(8px, 1.5vw, 12px); line-height: 1.7; }
+  .score-label { margin-top: 20px; color: var(--muted); font-size: 6px; }
+  .score {
+    display: block;
+    margin-top: 9px;
+    color: var(--foreground);
+    font-size: clamp(35px, 7vw, 66px);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .score-unit { margin-top: 8px; color: var(--muted); font-size: 6px; }
+  .practice-mode .scoreboard { grid-template-columns: minmax(0, 1fr); max-width: 440px; margin-inline: auto; }
+  .practice-mode #p2 { display: none; }
+
+  /* Percentage background-position spans (element - sheet) width, so frame k of N
+     sits at k/(N-1). jump-none makes the N steps land exactly on those boundaries;
+     plain steps(N) lands on k/N and drifts the character forward mid-swing. */
+  @keyframes sprite-idle { to { background-position: 100% 0; } }
+  @keyframes sprite-attack { to { background-position: 100% 0; } }
+  @keyframes sprite-walk { to { background-position: 100% 0; } }
+  /* translateX sits outermost so the step distance stays in screen pixels
+     instead of being multiplied by the 3.5x pixel-art scale. */
+  @keyframes fighter-step-out {
+    from { transform: translateX(0) scale(3.5) scaleX(var(--flip)); }
+    to { transform: translateX(var(--advance)) scale(3.5) scaleX(var(--flip)); }
+  }
+  @keyframes fighter-step-back {
+    from { transform: translateX(var(--advance)) scale(3.5) scaleX(calc(-1 * var(--flip))); }
+    to { transform: translateX(0) scale(3.5) scaleX(calc(-1 * var(--flip))); }
+  }
+  @keyframes impact-flash {
+    0%, 100% { filter: none; }
+    18%, 62% { filter: brightness(1.7) saturate(1.45); }
+  }
+  @keyframes peak-callout {
+    0% { opacity: 0; transform: translate(-50%, 15px) scale(.7); }
+    24%, 74% { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -26px) scale(1.08); }
+  }
+
+  .turn-card {
+    padding: clamp(17px, 3vw, 27px);
+    border: 3px solid var(--border);
+    background: var(--background);
+    text-align: center;
+  }
+  #turn { min-height: 23px; color: var(--accent); font-size: clamp(10px, 2vw, 16px); line-height: 1.6; }
+  #timer { min-height: 26px; margin-top: 14px; color: var(--highlight); font-size: clamp(14px, 2.7vw, 22px); font-variant-numeric: tabular-nums; }
+  #timer.frozen { color: var(--primary); animation: blink .42s step-end infinite; }
+  #power { min-height: 18px; margin-top: 13px; color: var(--muted); font-size: 7px; line-height: 1.7; }
+  #matchStatus { min-height: 18px; margin-top: 12px; color: var(--primary); font-size: 6px; line-height: 1.9; }
+  #matchStatus.neutral { color: var(--muted); }
+
+  .setup-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 16px;
+    margin-top: 22px;
+    padding: 18px;
+    border: 3px solid var(--border);
+    background: var(--surface);
+  }
+  .mode-label { display: block; color: var(--highlight); font-size: 6px; }
+  #mode {
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px;
+    color: var(--foreground);
+    border: 2px solid var(--border);
+    border-radius: 0;
+    background: var(--background);
+    font-size: 7px;
+    line-height: 1.8;
+  }
+  #mode:disabled { opacity: .55; }
+  #start { min-width: 190px; }
+  #status {
+    min-height: 35px;
+    margin: 15px 1px 0;
+    color: var(--muted);
+    font-size: 6px;
+    line-height: 1.9;
+    text-align: center;
+  }
+  #status.ready { color: #65ef91; }
+  .game-hint {
+    margin: 17px 0 0;
+    color: var(--muted);
+    font-size: 6px;
+    line-height: 2;
+    text-align: center;
+  }
+  .game-hint strong { color: var(--highlight); }
+
+  .footer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px 18px;
+    margin-top: auto;
+    padding: 13px clamp(14px, 3vw, 34px);
+    border-top: 4px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 90%, #000);
+    color: var(--muted);
+    font-size: 6px;
+    line-height: 1.8;
+  }
+  .footer span { color: var(--accent); }
+
+  @keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
+  @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  @media (max-width: 780px) {
+    .menu-screen { grid-template-columns: 1fr; padding-top: 37px; }
+    .menu-panel { max-width: 510px; width: 100%; margin: 0 auto; }
+    .mode-grid { grid-template-columns: 1fr; }
+    .choice-button { min-height: 210px; }
+    .character-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fighter-slots { gap: 9px; }
+    .fighter-slot { padding: 12px 8px; }
+    .setup-controls { grid-template-columns: 1fr; }
+    #start { width: 100%; }
+  }
+  @media (max-width: 480px) {
+    .topbar { min-height: 63px; }
+    .brand { max-width: 36vw; line-height: 1.55; }
+    .link-summary { font-size: 6px; }
+    .screen { padding-inline: 13px; }
+    .game-logo h1 { letter-spacing: 1px; }
+    .menu-button { font-size: 8px; }
+    .scoreboard { gap: 10px; }
+    .player { min-height: 225px; padding: 13px 6px; }
+    .player .arena-sprite { margin-top: 20px; }
+    .player .name { font-size: 7px; }
+    .score { font-size: 39px; }
+    .footer { justify-content: center; text-align: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app" class="crt">
+  <div id="stars" aria-hidden="true"></div>
+  <div class="grid-bg" aria-hidden="true"></div>
+
+  <section class="splash" id="splash" aria-label="Loading Punch Off">
+    <div class="splash-copy">
+      <h1>PUNCH OFF</h1>
+      <p class="blink">LOADING SENSOR ARCADE…</p>
+    </div>
+  </section>
+
+  <header class="topbar">
+    <button type="button" class="home-button" id="homeButton" hidden>⌂ HOME</button>
+    <div class="brand" id="brand">GO-TION ARCADE</div>
+    <div class="link-summary" id="linkSummary" aria-live="polite">
+      <i class="link-light" aria-hidden="true"></i>
+      <span id="linkSummaryText">CONNECTING TO PHONE SENSOR…</span>
+    </div>
+  </header>
+
+  <div class="marquee-wrap" aria-hidden="true">
+    <div class="marquee">PUNCH OFF | MAKE ONE CLEAN, SHARP PUNCH | HIGHEST PEAK WINS | CONNECT YOUR PHONE AT THE SENSOR PAGE | PUNCH OFF | MAKE ONE CLEAN, SHARP PUNCH | HIGHEST PEAK WINS | CONNECT YOUR PHONE AT THE SENSOR PAGE | </div>
+  </div>
+
+  <main>
+    <section class="screen menu-screen" data-screen="menu">
+      <div class="game-logo">
+        <h1>PUNCH OFF</h1>
+        <div class="edition">SENSOR ARCADE EDITION</div>
+        <p class="tagline">A real-world punch-off powered by your phone’s motion sensor. Land one clean punch. The strongest acceleration peak wins.</p>
+        <div class="pixel-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="menu-panel">
+        <button type="button" class="menu-button keyboard-focus" data-menu="play">PLAY PUNCH OFF</button>
+        <button type="button" class="menu-button" data-menu="world">SELECT WORLD THEME</button>
+        <button type="button" class="menu-button" data-menu="options">OPTIONS</button>
+        <button type="button" class="menu-button" data-menu="credits">CREDITS</button>
+
+        <div class="connection-panel">
+          <div class="panel-label">PHONE SENSOR LINK</div>
+          <p class="connection-copy" id="menuConnection" aria-live="polite">Checking for the phone sensor stream…</p>
+          <div class="phone-note">Open this same HTTPS address on a phone, tap “Start streaming,” then return to this screen on the laptop.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="world" hidden>
+      <h1 class="screen-heading">SELECT WORLD THEME</h1>
+      <p class="screen-subheading">Choose the look of your arena. Your selection stays saved on this device.</p>
+      <div class="world-grid" id="worldGrid">
+        <button type="button" class="world-button" data-world="mushroom">MUSHROOM KINGDOM<small>CLASSIC NIGHT ARCADE</small></button>
+        <button type="button" class="world-button" data-world="hyrule">HYRULE PLAINS<small>EMERALD TRAINING GROUND</small></button>
+        <button type="button" class="world-button" data-world="corneria">CORNERIA SECTOR<small>DEEP SPACE RING</small></button>
+        <button type="button" class="world-button" data-world="dreamland">DREAMLAND<small>NEON CLOUD ARENA</small></button>
+        <button type="button" class="world-button" data-world="kanto">KANTO ROUTE 1<small>FOREST ROAD DOJO</small></button>
+      </div>
+      <div class="button-row"><button type="button" class="arcade-button ghost" data-back="menu">← BACK</button></div>
+    </section>
+
+    <section class="screen" data-screen="mode" hidden>
+      <h1 class="screen-heading">SELECT GAME MODE</h1>
+      <p class="screen-subheading">Both modes use the live phone sensor. Choose versus for a head-to-head peak challenge, or practice to test your own best punch.</p>
+      <div class="mode-grid">
+        <button type="button" class="choice-button keyboard-focus" data-game-type="versus">
+          <span class="choice-icon">VS</span>
+          <span class="choice-name">VERSUS</span>
+          <span class="choice-description">Challenge a local rival</span>
+          <span class="choice-detail">ONE PHONE: take turns<br>TWO PHONES: punch together</span>
+        </button>
+        <button type="button" class="choice-button" data-game-type="practice">
+          <span class="choice-icon">RUN</span>
+          <span class="choice-name">PRACTICE</span>
+          <span class="choice-description">Find your cleanest peak</span>
+          <span class="choice-detail">ONE PHONE<br>10-SECOND TRAINING RUN</span>
+        </button>
+      </div>
+      <div class="button-row"><button type="button" class="arcade-button ghost" data-back="menu">← BACK</button></div>
+    </section>
+
+    <section class="screen" data-screen="characters" hidden>
+      <h1 class="screen-heading">CHARACTER SELECT</h1>
+      <p class="screen-subheading" id="characterInstruction">PLAYER 1: CHOOSE YOUR FIGHTER</p>
+      <div class="fighter-slots">
+        <div class="fighter-slot" id="fighterOneSlot"><strong>PLAYER 1</strong><span id="fighterOne">CHOOSE FIGHTER</span></div>
+        <div class="vs-mark" id="versusMark">VS</div>
+        <div class="fighter-slot" id="fighterTwoSlot"><strong id="fighterTwoTitle">PLAYER 2</strong><span id="fighterTwo">CHOOSE FIGHTER</span></div>
+      </div>
+      <div class="character-grid" id="characterGrid">
+        <button type="button" class="character-button keyboard-focus" data-character="nova" style="--character-color:#45bfe8"><span class="fighter-sprite character-sprite sprite-soldier" aria-hidden="true"></span><span class="character-name">NOVA</span><span class="character-ready"></span></button>
+        <button type="button" class="character-button" data-character="ember" style="--character-color:#ef704d"><span class="fighter-sprite character-sprite sprite-orc" aria-hidden="true"></span><span class="character-name">EMBER</span><span class="character-ready"></span></button>
+        <button type="button" class="character-button" data-character="pixel" style="--character-color:#b76cec"><span class="fighter-sprite character-sprite sprite-demon" aria-hidden="true"></span><span class="character-name">PIXEL</span><span class="character-ready"></span></button>
+        <button type="button" class="character-button" data-character="moss" style="--character-color:#58c87a"><span class="fighter-sprite character-sprite sprite-blood" aria-hidden="true"></span><span class="character-name">MOSS</span><span class="character-ready"></span></button>
+      </div>
+      <p class="selection-hint" id="characterHint">CHOOSE PLAYER 1, THEN PLAYER 2. SELECTED FIGHTERS MUST BE DIFFERENT.</p>
+      <div class="button-row">
+        <button type="button" class="arcade-button ghost" data-back="mode">← BACK</button>
+        <button type="button" class="arcade-button secondary" id="characterContinue" disabled>CONTINUE TO ARENA →</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="options" hidden>
+      <h1 class="screen-heading">OPTIONS</h1>
+      <p class="screen-subheading">These controls affect this browser only. Sound starts after your first button press, as required by browsers.</p>
+      <div class="settings-panel panel">
+        <div class="settings-row">
+          <label for="effectsVolume">SOUND EFFECTS<br><output id="effectsValue">80%</output></label>
+          <input id="effectsVolume" type="range" min="0" max="100" value="80">
+        </div>
+        <div class="settings-row">
+          <label for="crtButton">CRT SCREEN EFFECT</label>
+          <button type="button" class="toggle-button" id="crtButton">ON</button>
+        </div>
+      </div>
+      <div class="button-row"><button type="button" class="arcade-button ghost" data-back="menu">← BACK</button></div>
+    </section>
+
+    <section class="screen" data-screen="credits" hidden>
+      <h1 class="screen-heading">CREDITS</h1>
+      <div class="credits-panel panel">
+        <p>PUNCH OFF<br>GO-TION ARCADE INTERFACE<br><br>ANDIKA + SURASET + WILLIAM</p>
+        <p class="thanks">BUILT FOR A FRIENDLY, REAL-WORLD FIGHT FOR THE HIGHEST CLEAN PUNCH PEAK.</p>
+      </div>
+      <div class="button-row"><button type="button" class="arcade-button ghost" data-back="menu">← BACK</button></div>
+    </section>
+
+    <section class="screen game-screen" data-screen="game" hidden>
+      <div class="game-shell" id="gameShell">
+        <div class="game-topline">
+          <span class="game-type-tag" id="gameTypeTag">VERSUS MODE</span>
+          <span class="game-ready-copy" id="gameReadyCopy">PHONE LINK REQUIRED</span>
+        </div>
+
+        <div class="scoreboard" aria-label="Player scores">
+          <div class="player" id="p1">
+            <div class="player-role">PLAYER 1</div>
+            <span class="fighter-sprite arena-sprite sprite-soldier" id="p1Sprite" aria-hidden="true"></span>
+            <div class="name" id="p1Name">NOVA</div>
+            <div class="score-label">BEST PEAK</div>
+            <strong class="score" id="s1">0.0</strong>
+            <div class="score-unit">m/s²</div>
+          </div>
+          <div class="player" id="p2">
+            <div class="player-role">PLAYER 2</div>
+            <span class="fighter-sprite arena-sprite sprite-orc" id="p2Sprite" aria-hidden="true"></span>
+            <div class="name" id="p2Name">EMBER</div>
+            <div class="score-label">BEST PEAK</div>
+            <strong class="score" id="s2">0.0</strong>
+            <div class="score-unit">m/s²</div>
+          </div>
+        </div>
+
+        <div class="turn-card">
+          <div id="turn" aria-live="polite">PREPARE YOUR FIGHTERS</div>
+          <div id="timer">10.0 SEC</div>
+          <div id="power">Acceleration: —</div>
+          <div id="matchStatus" class="neutral" aria-live="polite">Select how you want to play, then wait for the phone sensor.</div>
+        </div>
+
+        <div class="setup-controls" id="versusControls">
+          <label class="mode-label" for="mode">PLAY MODE
+            <select id="mode">
+              <option value="pass">ONE PHONE — PASS IT</option>
+              <option value="duo">TWO PHONES — SIMULTANEOUS</option>
+            </select>
+          </label>
+          <button type="button" class="arcade-button secondary" id="start" disabled>START PLAYER 1</button>
+        </div>
+        <div class="setup-controls" id="practiceControls" hidden>
+          <div class="mode-label">PRACTICE RUN<br><span style="color:var(--muted);font-size:6px;line-height:2">One connected phone gives you 10 seconds to set your best clean peak.</span></div>
+          <button type="button" class="arcade-button secondary" id="practiceStart" disabled>START PRACTICE</button>
+        </div>
+
+        <div id="status" aria-live="polite">Waiting for the phone sensor stream…</div>
+        <p class="game-hint"><strong>HOW TO SCORE:</strong> Make one strong, sharp punch. Scores show the highest gravity-free acceleration peak. Sustained shaking is ignored.</p>
+        <div class="button-row"><button type="button" class="arcade-button ghost" id="exitGame">← EXIT TO MENU</button></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div><span>↑↓</span> NAVIGATE &nbsp; <span>↵</span> SELECT &nbsp; <span>ESC</span> BACK</div>
+    <div>PHONE SENSOR REQUIRED FOR PLAY</div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const ROUND_MS = 10_000;
+  const HIT_THRESHOLD = 8;
+  const WORLD_STORAGE_KEY = "go-tion-selected-world";
+  const SETTINGS_STORAGE_KEY = "go-tion-settings";
+  const $ = (id) => document.getElementById(id);
+
+  const WORLDS = {
+    mushroom: {
+      "--background": "#0a0a1a", "--surface": "#0d0d2a", "--surface-active": "#1a1a5e",
+      "--border": "#3a3a8e", "--accent": "#f8d800", "--accent-dark": "#7a5000",
+      "--muted": "#8888cc", "--highlight": "#76d7ff", "--primary": "#e83030",
+      "--primary-shadow": "#7a0000", "--grid": "#3a3a8e"
+    },
+    hyrule: {
+      "--background": "#071b18", "--surface": "#10332a", "--surface-active": "#1b5940",
+      "--border": "#518a57", "--accent": "#f5dc73", "--accent-dark": "#725915",
+      "--muted": "#a4c99f", "--highlight": "#8fe2c1", "--primary": "#b35d37",
+      "--primary-shadow": "#61331c", "--grid": "#518a57"
+    },
+    corneria: {
+      "--background": "#050b1d", "--surface": "#0b2041", "--surface-active": "#153e70",
+      "--border": "#3975b9", "--accent": "#77e7ff", "--accent-dark": "#155275",
+      "--muted": "#91b5dd", "--highlight": "#f37dff", "--primary": "#e55d91",
+      "--primary-shadow": "#702446", "--grid": "#3975b9"
+    },
+    dreamland: {
+      "--background": "#24102c", "--surface": "#48234e", "--surface-active": "#754077",
+      "--border": "#bd6cb8", "--accent": "#fff0a5", "--accent-dark": "#8a5b2f",
+      "--muted": "#e0aee1", "--highlight": "#82eff3", "--primary": "#ef7da8",
+      "--primary-shadow": "#8a355b", "--grid": "#bd6cb8"
+    },
+    kanto: {
+      "--background": "#152127", "--surface": "#25423f", "--surface-active": "#3c6657",
+      "--border": "#82a15d", "--accent": "#e5ed83", "--accent-dark": "#74772e",
+      "--muted": "#b7cf95", "--highlight": "#a9e7d7", "--primary": "#d65a4a",
+      "--primary-shadow": "#763026", "--grid": "#82a15d"
+    }
+  };
+
+  const CHARACTERS = {
+    nova: { id: "nova", name: "NOVA", sprite: "sprite-soldier", color: "#45bfe8" },
+    ember: { id: "ember", name: "EMBER", sprite: "sprite-orc", color: "#ef704d" },
+    pixel: { id: "pixel", name: "PIXEL", sprite: "sprite-demon", color: "#b76cec" },
+    moss: { id: "moss", name: "MOSS", sprite: "sprite-blood", color: "#58c87a" }
+  };
+  const TRAINING_BAG = { id: "bag", name: "HEAVY BAG", sprite: "sprite-orc", color: "#999999" };
+  const menuButtons = Array.from(document.querySelectorAll("[data-menu]"));
+  const worldButtons = Array.from(document.querySelectorAll("[data-world]"));
+  const modeButtons = Array.from(document.querySelectorAll("[data-game-type]"));
+  const characterButtons = Array.from(document.querySelectorAll("[data-character]"));
+  const screens = Array.from(document.querySelectorAll("[data-screen]"));
+
+  let selectedWorld = "mushroom";
+  let settings = { effectsVolume: 80, crtEnabled: true };
+  let activeScreen = "menu";
+  let menuIndex = 0;
+  let worldIndex = 0;
+  let modeIndex = 0;
+  let characterIndex = 0;
+  let gameType = null;
+  let fighters = [null, null];
+
+  let connected = false;
+  let slots = [false, false];
+  let streamCount = 0;
+  let playerStreamCounts = [0, 0];
+  let scores = [0, 0];
+  let active = [false, false];
+  let currentTurn = 0;
+  let passStage = 1;
+  let activeStreamSlot = 0;
+  let matchState = "setup";
+  let roundEnds = 0;
+  let animationFrame = 0;
+  let roundTimeout = 0;
+  let reconnectTimer = 0;
+  let gameSocket = null;
+  let noticeTimer = 0;
+  let notice = "";
+  let audioContext = null;
+  // Milliseconds left on the round while the peak cutscene holds the clock;
+  // 0 whenever the clock is either running or not in a round at all.
+  let pausedRemaining = 0;
+  // Ordered legs of the peak cutscene.  Each name is also the CSS class that
+  // drives that leg's sprite sheet and movement.
+  const PEAK_CINEMATIC = [
+    { name: "walk-out", ms: 960 },
+    { name: "strike", ms: 560 },
+    { name: "walk-back", ms: 960 }
+  ];
+  const cinematicTimers = [0, 0];
+
+  function safelyReadSettings() {
+    try {
+      const storedSettings = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || "{}");
+      settings = {
+        effectsVolume: Number.isFinite(Number(storedSettings.effectsVolume)) ? Math.max(0, Math.min(100, Number(storedSettings.effectsVolume))) : 80,
+        crtEnabled: typeof storedSettings.crtEnabled === "boolean" ? storedSettings.crtEnabled : true
+      };
+    } catch {
+      settings = { effectsVolume: 80, crtEnabled: true };
+    }
+    try {
+      const savedWorld = localStorage.getItem(WORLD_STORAGE_KEY);
+      selectedWorld = WORLDS[savedWorld] ? savedWorld : "mushroom";
+    } catch {
+      selectedWorld = "mushroom";
+    }
+  }
+
+  function saveSettings() {
+    try { localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings)); } catch {}
+  }
+
+  function applySettings() {
+    $("app").classList.toggle("crt", settings.crtEnabled);
+    $("effectsVolume").value = String(settings.effectsVolume);
+    $("effectsValue").textContent = String(settings.effectsVolume) + "%";
+    $("crtButton").textContent = settings.crtEnabled ? "ON" : "OFF";
+    $("crtButton").classList.toggle("off", !settings.crtEnabled);
+  }
+
+  function applyWorld(world) {
+    if (!WORLDS[world]) return;
+    selectedWorld = world;
+    for (const [property, value] of Object.entries(WORLDS[world])) {
+      $("app").style.setProperty(property, value);
+    }
+    worldButtons.forEach((button, index) => {
+      const selected = button.dataset.world === world;
+      button.classList.toggle("selected", selected);
+      button.classList.toggle("keyboard-focus", index === worldIndex);
+      if (selected) worldIndex = index;
+    });
+    try { localStorage.setItem(WORLD_STORAGE_KEY, selectedWorld); } catch {}
+  }
+
+  function createStars() {
+    const fragment = document.createDocumentFragment();
+    for (let index = 0; index < 80; index += 1) {
+      const star = document.createElement("i");
+      star.className = "star";
+      star.style.left = (Math.random() * 100).toFixed(2) + "%";
+      star.style.top = (Math.random() * 100).toFixed(2) + "%";
+      star.style.width = Math.random() > .8 ? "3px" : "1px";
+      star.style.height = star.style.width;
+      star.style.setProperty("--duration", (1 + Math.random() * 2).toFixed(2) + "s");
+      star.style.setProperty("--delay", (Math.random() * 3).toFixed(2) + "s");
+      fragment.append(star);
+    }
+    $("stars").append(fragment);
+  }
+
+  function playSound(type) {
+    if (!settings.effectsVolume || !window.AudioContext && !window.webkitAudioContext) return;
+    try {
+      const Context = window.AudioContext || window.webkitAudioContext;
+      audioContext = audioContext || new Context();
+      if (audioContext.state === "suspended") audioContext.resume();
+      const sounds = {
+        select: [460, 720, .07],
+        back: [340, 180, .1],
+        start: [240, 880, .22],
+        hit: [160, 420, .08]
+      };
+      const sound = sounds[type] || sounds.select;
+      const now = audioContext.currentTime;
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(sound[0], now);
+      oscillator.frequency.exponentialRampToValueAtTime(sound[1], now + sound[2]);
+      gain.gain.setValueAtTime((settings.effectsVolume / 100) * .06, now);
+      gain.gain.exponentialRampToValueAtTime(.001, now + sound[2]);
+      oscillator.connect(gain).connect(audioContext.destination);
+      oscillator.start(now);
+      oscillator.stop(now + sound[2]);
+    } catch {}
+  }
+
+  function setScreen(name) {
+    activeScreen = name;
+    screens.forEach((screen) => { screen.hidden = screen.dataset.screen !== name; });
+    $("homeButton").hidden = name === "menu";
+    $("brand").hidden = name !== "menu";
+    if (name === "game") updateGameView();
+  }
+
+  function returnToMenu() {
+    stopClock();
+    if (activeScreen === "game") resetMatch();
+    setScreen("menu");
+    focusMenu(menuIndex);
+  }
+
+  function backTo(name) {
+    if (activeScreen === "game") resetMatch();
+    setScreen(name);
+    if (name === "menu") focusMenu(menuIndex);
+    if (name === "world") focusWorld(worldIndex);
+    if (name === "mode") focusMode(modeIndex);
+    if (name === "characters") focusCharacter(characterIndex);
+  }
+
+  function focusMenu(index) {
+    menuIndex = (index + menuButtons.length) % menuButtons.length;
+    menuButtons.forEach((button, buttonIndex) => button.classList.toggle("keyboard-focus", buttonIndex === menuIndex));
+  }
+
+  function focusWorld(index) {
+    worldIndex = (index + worldButtons.length) % worldButtons.length;
+    worldButtons.forEach((button, buttonIndex) => button.classList.toggle("keyboard-focus", buttonIndex === worldIndex));
+  }
+
+  function focusMode(index) {
+    modeIndex = (index + modeButtons.length) % modeButtons.length;
+    modeButtons.forEach((button, buttonIndex) => button.classList.toggle("keyboard-focus", buttonIndex === modeIndex));
+  }
+
+  function focusCharacter(index) {
+    characterIndex = (index + characterButtons.length) % characterButtons.length;
+    characterButtons.forEach((button, buttonIndex) => button.classList.toggle("keyboard-focus", buttonIndex === characterIndex));
+  }
+
+  function openMenuItem(item) {
+    if (item === "play") {
+      setScreen("mode");
+      focusMode(modeIndex);
+      return;
+    }
+    setScreen(item);
+    if (item === "world") focusWorld(worldIndex);
+  }
+
+  function startGameType(type) {
+    gameType = type;
+    fighters = [null, null];
+    updateCharacterView();
+    setScreen("characters");
+    focusCharacter(0);
+  }
+
+  function selectCharacter(id) {
+    const character = CHARACTERS[id];
+    if (!character) return;
+
+    if (gameType === "practice") {
+      fighters = [character, TRAINING_BAG];
+    } else if (!fighters[0] || fighters[0].id === id) {
+      fighters = [fighters[0] && fighters[0].id === id ? null : character, null];
+    } else if (fighters[1] && fighters[1].id === id) {
+      fighters = [fighters[0], null];
+    } else {
+      fighters = [fighters[0], character];
+    }
+    updateCharacterView();
+  }
+
+  function updateCharacterView() {
+    const practice = gameType === "practice";
+    const first = fighters[0];
+    const second = fighters[1];
+    $("characterInstruction").textContent = practice
+      ? "PRACTICE: CHOOSE YOUR FIGHTER"
+      : first ? "PLAYER 2: CHOOSE A DIFFERENT FIGHTER" : "PLAYER 1: CHOOSE YOUR FIGHTER";
+    $("fighterOne").textContent = first ? first.name : "CHOOSE FIGHTER";
+    $("fighterTwoTitle").textContent = practice ? "TRAINING" : "PLAYER 2";
+    $("fighterTwo").textContent = practice ? "HEAVY BAG" : second ? second.name : "CHOOSE FIGHTER";
+    $("fighterOneSlot").classList.toggle("filled", Boolean(first));
+    $("fighterTwoSlot").classList.toggle("filled", Boolean(second));
+    $("versusMark").textContent = practice ? "•" : "VS";
+    $("characterHint").textContent = practice
+      ? "PICK A FIGHTER, THEN CONNECT ONE PHONE FOR A 10-SECOND PRACTICE RUN."
+      : "CHOOSE PLAYER 1, THEN PLAYER 2. SELECTED FIGHTERS MUST BE DIFFERENT.";
+    $("characterContinue").disabled = practice ? !first : !first || !second;
+
+    characterButtons.forEach((button, index) => {
+      const character = CHARACTERS[button.dataset.character];
+      const tag = first && first.id === character.id ? "P1 READY" : second && second.id === character.id ? "P2 READY" : "";
+      button.classList.toggle("selected", Boolean(tag));
+      button.classList.toggle("keyboard-focus", index === characterIndex);
+      button.querySelector(".character-ready").textContent = tag;
+    });
+  }
+
+  function continueToArena() {
+    if (!fighters[0] || (gameType !== "practice" && !fighters[1])) return;
+    if (gameType === "practice") fighters[1] = TRAINING_BAG;
+    resetMatch();
+    setScreen("game");
+  }
+
+  function twoPhone() {
+    return gameType === "versus" && $("mode").value === "duo";
+  }
+
+  function onePhoneReady() {
+    if (!connected || streamCount !== 1) return false;
+    if (playerStreamCounts[0] + playerStreamCounts[1] !== 1) return false;
+    return !activeStreamSlot || playerStreamCounts[activeStreamSlot - 1] === 1;
+  }
+
+  function twoPhoneReady() {
+    return connected &&
+      streamCount === 2 &&
+      playerStreamCounts[0] === 1 &&
+      playerStreamCounts[1] === 1;
+  }
+
+  function canStartRound() {
+    if (gameType === "practice") return onePhoneReady();
+    return twoPhone() ? twoPhoneReady() : onePhoneReady();
+  }
+
+  function connectionText() {
+    if (gameType === "practice") {
+      if (!connected) return "WAITING FOR ONE PHONE SENSOR…";
+      return onePhoneReady()
+        ? "PHONE SENSOR ACTIVE — PRACTICE READY"
+        : "PRACTICE NEEDS EXACTLY ONE ACTIVE PHONE.";
+    }
+    if (twoPhone()) {
+      return twoPhoneReady()
+        ? "BOTH PLAYER PHONE SENSORS ACTIVE — READY"
+        : "TWO-PHONE MODE NEEDS ONE ACTIVE SENSOR IN EACH PLAYER SLOT.";
+    }
+    if (!connected) return "WAITING FOR THE PHONE SENSOR STREAM…";
+    if (!onePhoneReady() && activeStreamSlot) {
+      return "THE PASS PHONE MUST RECONNECT AS PLAYER " + activeStreamSlot + ".";
+    }
+    return onePhoneReady()
+      ? "PHONE SENSOR ACTIVE — READY TO PLAY"
+      : "PASS MODE NEEDS EXACTLY ONE ACTIVE PHONE.";
+  }
+
+  function renderConnection() {
+    const menuText = connected
+      ? "Active phone sensor" + (streamCount === 1 ? "" : "s") + ": " + streamCount +
+        ". Player slots: " + (slots[0] ? "P1 " : "") + (slots[1] ? "P2" : "")
+      : "Waiting for the phone sensor stream…";
+    $("menuConnection").textContent = menuText;
+    $("menuConnection").classList.toggle("ready", connected);
+
+    const gameConnection = connectionText();
+    $("status").textContent = gameConnection;
+    $("status").classList.toggle("ready", canStartRound());
+    $("linkSummaryText").textContent = connected ? gameConnection : "PHONE SENSOR OFFLINE";
+    $("linkSummary").classList.toggle("ready", canStartRound());
+    $("linkSummary").classList.toggle("problem", !connected);
+
+    if (activeScreen === "game") {
+      $("gameReadyCopy").textContent = canStartRound() ? "SENSOR READY" : "SENSOR REQUIRED";
+      updateGameView();
+    }
+  }
+
+  function resetMatch() {
+    stopClock();
+    clearPeakAttack(1);
+    clearPeakAttack(2);
+    scores = [0, 0];
+    active = [false, false];
+    currentTurn = 0;
+    passStage = 1;
+    activeStreamSlot = 0;
+    matchState = "setup";
+    notice = "";
+    clearTimeout(noticeTimer);
+    $("mode").disabled = false;
+    updateGameView();
+  }
+
+  function winnerText() {
+    if (scores[0] === scores[1]) return "IT'S A TIE!";
+    return (scores[0] > scores[1] ? "PLAYER 1" : "PLAYER 2") + " WINS!";
+  }
+
+  function defaultMatchStatus() {
+    if (matchState === "active") return "LIVE SENSOR SCORING — MAKE ONE CLEAN, SHARP PUNCH.";
+    if (matchState === "between") return "PASS THE PHONE TO PLAYER 2, THEN START THEIR TURN.";
+    if (matchState === "complete") {
+      if (gameType === "practice") return "PRACTICE COMPLETE — RESET TO TRY AGAIN.";
+      return "MATCH COMPLETE — RESET TO PLAY AGAIN.";
+    }
+    return gameType === "practice"
+      ? "CONNECT ONE PHONE, THEN START A 10-SECOND PRACTICE RUN."
+      : twoPhone()
+        ? "BOTH PHONES MUST CLAIM PLAYER 1 AND PLAYER 2 BEFORE STARTING."
+        : "CONNECT ONE PHONE, THEN PASS IT BETWEEN PLAYERS.";
+  }
+
+  function setNotice(text, duration) {
+    notice = text;
+    clearTimeout(noticeTimer);
+    if (duration) {
+      noticeTimer = window.setTimeout(() => {
+        notice = "";
+        updateGameView();
+      }, duration);
+    }
+    updateGameView();
+  }
+
+  function clearPeakAttack(player) {
+    if (player !== 1 && player !== 2) return;
+    clearTimeout(cinematicTimers[player - 1]);
+    cinematicTimers[player - 1] = 0;
+    const card = $("p" + player);
+    card.classList.remove("cinematic");
+    PEAK_CINEMATIC.forEach((leg) => card.classList.remove(leg.name));
+  }
+
+  function cinematicRunning() {
+    return cinematicTimers[0] !== 0 || cinematicTimers[1] !== 0;
+  }
+
+  function triggerPeakAttack(player) {
+    if (player !== 1 && player !== 2) return;
+    // A rising burst of samples can beat a single peak several times over.  The
+    // first one owns the cutscene; restarting it on each new best would hold the
+    // clock open for as long as the samples keep climbing.
+    if (cinematicTimers[player - 1]) return;
+    const card = $("p" + player);
+    // Drop any leftover classes from an interrupted cutscene, then flush the
+    // removal so this one's first leg starts from frame one.
+    clearPeakAttack(player);
+    void card.offsetWidth;
+    // Stop the round so the whole walk-out, swing and walk-back plays in frozen
+    // time; the clock restarts once every fighter is back inside its card.
+    pauseClock();
+    // Walk out over the card's own edge, sized from the card so the move reads
+    // the same at any viewport width.  With an opponent on screen, stop short of
+    // the halfway line so two simultaneous two-phone cutscenes do not walk into
+    // each other; practice mode hides player two, so there it can step further.
+    // Player two goes the other way, so both walk toward the middle.
+    const opponent = $("p" + (player === 1 ? 2 : 1));
+    const step = card.clientWidth * (opponent.offsetParent ? 0.42 : 0.62);
+    card.style.setProperty("--advance", (player === 2 ? -step : step).toFixed(1) + "px");
+    card.classList.add("cinematic");
+    runCinematicLeg(player, 0);
+  }
+
+  function runCinematicLeg(player, index) {
+    const card = $("p" + player);
+    const leg = PEAK_CINEMATIC[index];
+    PEAK_CINEMATIC.forEach((entry) => card.classList.remove(entry.name));
+    if (!leg) {
+      card.classList.remove("cinematic");
+      cinematicTimers[player - 1] = 0;
+      if (!cinematicRunning()) resumeClock();
+      return;
+    }
+    // Flush the class removal so each leg's sheet animation starts from frame
+    // one rather than inheriting the previous leg's progress.
+    void card.offsetWidth;
+    card.classList.add(leg.name);
+    cinematicTimers[player - 1] = window.setTimeout(() => runCinematicLeg(player, index + 1), leg.ms);
+  }
+
+  function updateGameView() {
+    const practice = gameType === "practice";
+    const first = fighters[0] || CHARACTERS.nova;
+    const second = fighters[1] || CHARACTERS.ember;
+    const ready = canStartRound();
+    const score1 = scores[0].toFixed(1);
+    const score2 = scores[1].toFixed(1);
+
+    $("gameShell").classList.toggle("practice-mode", practice);
+    $("gameTypeTag").textContent = practice ? "PRACTICE MODE" : "VERSUS MODE";
+    $("p1Sprite").className = "fighter-sprite arena-sprite " + first.sprite;
+    $("p1Name").textContent = first.name;
+    $("p2Sprite").className = "fighter-sprite arena-sprite " + second.sprite;
+    $("p2Name").textContent = second.name;
+    $("s1").textContent = score1;
+    $("s2").textContent = score2;
+    $("p1").classList.toggle("active", active[0]);
+    $("p2").classList.toggle("active", active[1]);
+    $("versusControls").hidden = practice;
+    $("practiceControls").hidden = !practice;
+    $("mode").disabled = matchState !== "setup";
+    $("gameReadyCopy").textContent = ready ? "SENSOR READY" : "SENSOR REQUIRED";
+
+    let turnText = "PREPARE YOUR FIGHTERS";
+    let timerText = "10.0 SEC";
+    let startText = "START PLAYER 1";
+    let startDisabled = !ready;
+    if (matchState === "active") {
+      turnText = currentTurn === 3 ? "BOTH PLAYERS — GO!" : "PLAYER " + currentTurn + " — GO!";
+      startText = "ROUND IN PROGRESS";
+      startDisabled = true;
+    } else if (matchState === "between") {
+      turnText = "PASS THE PHONE TO PLAYER 2";
+      timerText = "READY?";
+      startText = "START PLAYER 2";
+      startDisabled = !ready;
+    } else if (matchState === "complete") {
+      turnText = practice ? "PRACTICE COMPLETE" : winnerText();
+      timerText = practice ? score1 + " m/s²" : "FINAL PEAKS";
+      startText = practice ? "RESET PRACTICE" : "RESET MATCH";
+      startDisabled = false;
+    } else if (practice) {
+      turnText = "PRACTICE RANGE READY";
+      startText = "START PRACTICE";
+      startDisabled = !ready;
+    } else if (twoPhone()) {
+      turnText = "BOTH PHONES READY?";
+      startText = "START 2-PLAYER ROUND";
+      startDisabled = !ready;
+    }
+
+    $("turn").textContent = turnText;
+    if (matchState !== "active") $("timer").textContent = timerText;
+    $("start").textContent = startText;
+    $("start").disabled = startDisabled;
+    $("practiceStart").textContent = startText;
+    $("practiceStart").disabled = startDisabled;
+    $("matchStatus").textContent = notice || defaultMatchStatus();
+    $("matchStatus").classList.toggle("neutral", !notice);
+  }
+
+  function stopClock() {
+    if (animationFrame) cancelAnimationFrame(animationFrame);
+    animationFrame = 0;
+    clearTimeout(roundTimeout);
+    roundTimeout = 0;
+    // Every way a round can end runs through here, so dropping the hold here
+    // means an aborted or finished round can never resume a stale clock.
+    pausedRemaining = 0;
+    $("timer").classList.remove("frozen");
+  }
+
+  function pauseClock() {
+    if (matchState !== "active" || pausedRemaining) return;
+    const remaining = Math.max(0, roundEnds - performance.now());
+    stopClock();
+    pausedRemaining = remaining;
+    $("timer").textContent = (remaining / 1000).toFixed(1) + " SEC";
+    $("timer").classList.add("frozen");
+  }
+
+  function resumeClock() {
+    if (!pausedRemaining) return;
+    const remaining = pausedRemaining;
+    stopClock();
+    if (matchState !== "active") return;
+    roundEnds = performance.now() + remaining;
+    scheduleRoundEnd();
+    runClock();
+  }
+
+  function scheduleRoundEnd() {
+    clearTimeout(roundTimeout);
+    const delay = Math.max(0, roundEnds - performance.now());
+    roundTimeout = window.setTimeout(() => {
+      if (matchState !== "active") return;
+      if (performance.now() < roundEnds) {
+        scheduleRoundEnd();
+        return;
+      }
+      finishRound();
+    }, delay + 10);
+  }
+
+  function runClock() {
+    const remaining = Math.max(0, roundEnds - performance.now());
+    $("timer").textContent = (remaining / 1000).toFixed(1) + " SEC";
+    if (remaining > 0 && matchState === "active") {
+      animationFrame = requestAnimationFrame(runClock);
+      return;
+    }
+    finishRound();
+  }
+
+  function beginRound() {
+    if (!canStartRound() || matchState === "active") return;
+    if (matchState === "complete") {
+      resetMatch();
+      return;
+    }
+
+    const nextTurn = gameType === "practice" ? 1 : twoPhone() ? 3 : passStage;
+    if (!twoPhone() && !activeStreamSlot) {
+      activeStreamSlot = playerStreamCounts[0] === 1 ? 1 : 2;
+    }
+    currentTurn = nextTurn;
+    active = nextTurn === 3 ? [true, true] : [nextTurn === 1, nextTurn === 2];
+    matchState = "active";
+    notice = "";
+    clearTimeout(noticeTimer);
+    $("mode").disabled = true;
+    roundEnds = performance.now() + ROUND_MS;
+    playSound("start");
+    updateGameView();
+    stopClock();
+    scheduleRoundEnd();
+    runClock();
+  }
+
+  function finishRound() {
+    if (matchState !== "active") return;
+    stopClock();
+    active = [false, false];
+    const finishedTurn = currentTurn;
+    currentTurn = 0;
+
+    if (gameType === "practice") {
+      matchState = "complete";
+      setNotice("PRACTICE PEAK: " + scores[0].toFixed(1) + " m/s²", 0);
+      return;
+    }
+    if (twoPhone()) {
+      matchState = "complete";
+      setNotice(winnerText(), 0);
+      return;
+    }
+    if (finishedTurn === 1 && passStage === 1) {
+      passStage = 2;
+      matchState = "between";
+      setNotice("PLAYER 1 LOCKED IN. PASS THE PHONE TO PLAYER 2.", 0);
+      return;
+    }
+    matchState = "complete";
+    setNotice(winnerText(), 0);
+  }
+
+  function abortRound() {
+    if (matchState !== "active") return;
+    stopClock();
+    active = [false, false];
+    currentTurn = 0;
+    matchState = "complete";
+    setNotice("PHONE LINK LOST — ROUND STOPPED. RECONNECT, THEN RESET THE MATCH.", 0);
+  }
+
+  function handleStart() {
+    if (matchState === "complete") {
+      resetMatch();
+      return;
+    }
+    beginRound();
+  }
+
+  function handleModeChange() {
+    if (matchState !== "setup") return;
+    resetMatch();
+    renderConnection();
+  }
+
+  function handleSensorMessage(data) {
+    let message;
+    try {
+      message = JSON.parse(data);
+    } catch {
+      return;
+    }
+
+    if (message.type === "status") {
+      connected = Boolean(message.connected);
+      slots = Array.isArray(message.players) ? [Boolean(message.players[0]), Boolean(message.players[1])] : [false, false];
+      playerStreamCounts = Array.isArray(message.playerStreamCounts)
+        ? [Math.max(0, Number(message.playerStreamCounts[0]) || 0), Math.max(0, Number(message.playerStreamCounts[1]) || 0)]
+        : [slots[0] ? 1 : 0, slots[1] ? 1 : 0];
+      streamCount = Number.isFinite(Number(message.streamCount))
+        ? Math.max(0, Number(message.streamCount))
+        : playerStreamCounts[0] + playerStreamCounts[1];
+      if (matchState === "active" && !pausedRemaining && performance.now() >= roundEnds) finishRound();
+      else if (matchState === "active" && !canStartRound()) abortRound();
+      renderConnection();
+      return;
+    }
+
+    if (message.type !== "accel") return;
+    const sourceSlot = Number(message.player);
+    if (matchState === "active" && !twoPhone() && activeStreamSlot && sourceSlot !== activeStreamSlot) {
+      return;
+    }
+    const power = Number(message.fmag);
+    $("power").textContent = "Acceleration: " + (Number.isFinite(power) ? power.toFixed(1) : "—") + " m/s²";
+
+    if (matchState !== "active") return;
+    // roundEnds is stale while a cutscene holds the clock, so the round can only
+    // be timed out against it once the clock is running again.  Samples keep
+    // scoring through the freeze: in two-phone mode both players punch at the
+    // same moment, and one player's cutscene must not eat the other's peak.
+    if (!pausedRemaining && performance.now() >= roundEnds) {
+      finishRound();
+      return;
+    }
+    const player = twoPhone() ? sourceSlot : currentTurn;
+    if (message.shake) {
+      if (message.shakeDetected) {
+        // Reset only when the server confirms sustained shaking.  Later
+        // samples in the cooldown remain non-scoring but do not repeatedly
+        // erase a score from a clean movement after the shake has stopped.
+        if ((player === 1 || player === 2) && active[player - 1]) {
+          scores[player - 1] = 0;
+          updateGameView();
+        }
+        setNotice("CONTINUOUS SHAKING IGNORED — MAKE ONE CLEAN, SHARP PUNCH.", 2600);
+      }
+      return;
+    }
+
+    if (notice.startsWith("CONTINUOUS SHAKING")) {
+      notice = "";
+      clearTimeout(noticeTimer);
+      updateGameView();
+    }
+    if (!Number.isFinite(power) || (player !== 1 && player !== 2) || !active[player - 1]) {
+      return;
+    }
+    if (power < HIT_THRESHOLD) return;
+
+    const previousPeak = scores[player - 1];
+    scores[player - 1] = Math.max(previousPeak, power);
+    if (scores[player - 1] !== previousPeak) {
+      playSound("hit");
+      triggerPeakAttack(player);
+      updateGameView();
+    }
+  }
+
+  function connectSensor() {
+    clearTimeout(reconnectTimer);
+    const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+    try {
+      gameSocket = new WebSocket(protocol + "//" + location.host + "/monitor");
+    } catch {
+      connected = false;
+      slots = [false, false];
+      streamCount = 0;
+      playerStreamCounts = [0, 0];
+      renderConnection();
+      reconnectTimer = window.setTimeout(connectSensor, 1000);
+      return;
+    }
+    gameSocket.onopen = () => {
+      $("linkSummaryText").textContent = "CHECKING PHONE SENSOR…";
+      $("linkSummary").classList.remove("problem");
+    };
+    gameSocket.onmessage = (event) => handleSensorMessage(event.data);
+    gameSocket.onerror = () => {
+      if (gameSocket && gameSocket.readyState < WebSocket.CLOSING) gameSocket.close();
+    };
+    gameSocket.onclose = () => {
+      connected = false;
+      slots = [false, false];
+      streamCount = 0;
+      playerStreamCounts = [0, 0];
+      if (matchState === "active") abortRound();
+      renderConnection();
+      reconnectTimer = window.setTimeout(connectSensor, 1000);
+    };
+  }
+
+  function keyboardNavigate(event) {
+    if (!$("splash").hidden) return;
+    const key = event.key;
+    if (key === "Escape") {
+      if (activeScreen === "game" && matchState === "active") return;
+      event.preventDefault();
+      if (activeScreen === "menu") return;
+      if (activeScreen === "characters") backTo("mode");
+      else backTo("menu");
+      return;
+    }
+
+    if (activeScreen === "menu") {
+      if (key === "ArrowDown" || key === "ArrowUp") {
+        event.preventDefault();
+        focusMenu(menuIndex + (key === "ArrowDown" ? 1 : -1));
+      } else if (key === "Enter") {
+        event.preventDefault();
+        menuButtons[menuIndex].click();
+      }
+      return;
+    }
+    if (activeScreen === "world") {
+      if (key === "ArrowRight" || key === "ArrowDown" || key === "ArrowLeft" || key === "ArrowUp") {
+        event.preventDefault();
+        const move = key === "ArrowRight" || key === "ArrowDown" ? 1 : -1;
+        focusWorld(worldIndex + move);
+      } else if (key === "Enter") {
+        event.preventDefault();
+        worldButtons[worldIndex].click();
+      }
+      return;
+    }
+    if (activeScreen === "mode") {
+      if (key === "ArrowRight" || key === "ArrowDown" || key === "ArrowLeft" || key === "ArrowUp") {
+        event.preventDefault();
+        const move = key === "ArrowRight" || key === "ArrowDown" ? 1 : -1;
+        focusMode(modeIndex + move);
+      } else if (key === "Enter") {
+        event.preventDefault();
+        modeButtons[modeIndex].click();
+      }
+      return;
+    }
+    if (activeScreen === "characters") {
+      if (key.startsWith("Arrow")) {
+        event.preventDefault();
+        const move = key === "ArrowLeft" ? -1 : key === "ArrowRight" ? 1 : key === "ArrowUp" ? -2 : 2;
+        focusCharacter(characterIndex + move);
+      } else if (key === "Enter") {
+        event.preventDefault();
+        characterButtons[characterIndex].click();
+      }
+    }
+  }
+
+  safelyReadSettings();
+  createStars();
+  applySettings();
+  applyWorld(selectedWorld);
+  updateCharacterView();
+  renderConnection();
+
+  document.addEventListener("keydown", keyboardNavigate);
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button || button.disabled) return;
+    playSound(button.dataset.back || button.id === "exitGame" ? "back" : "select");
+  });
+
+  menuButtons.forEach((button, index) => {
+    button.addEventListener("mouseenter", () => focusMenu(index));
+    button.addEventListener("click", () => openMenuItem(button.dataset.menu));
+  });
+  worldButtons.forEach((button, index) => {
+    button.addEventListener("mouseenter", () => focusWorld(index));
+    button.addEventListener("click", () => {
+      applyWorld(button.dataset.world);
+      setNotice("WORLD THEME SAVED.", 1000);
+    });
+  });
+  modeButtons.forEach((button, index) => {
+    button.addEventListener("mouseenter", () => focusMode(index));
+    button.addEventListener("click", () => startGameType(button.dataset.gameType));
+  });
+  characterButtons.forEach((button, index) => {
+    button.addEventListener("mouseenter", () => focusCharacter(index));
+    button.addEventListener("click", () => selectCharacter(button.dataset.character));
+  });
+  document.querySelectorAll("[data-back]").forEach((button) => {
+    button.addEventListener("click", () => backTo(button.dataset.back));
+  });
+
+  $("homeButton").addEventListener("click", returnToMenu);
+  $("characterContinue").addEventListener("click", continueToArena);
+  $("effectsVolume").addEventListener("input", (event) => {
+    settings.effectsVolume = Number(event.target.value);
+    saveSettings();
+    applySettings();
+  });
+  $("effectsVolume").addEventListener("change", () => playSound("select"));
+  $("crtButton").addEventListener("click", () => {
+    settings.crtEnabled = !settings.crtEnabled;
+    saveSettings();
+    applySettings();
+  });
+  $("mode").addEventListener("change", handleModeChange);
+  $("start").addEventListener("click", handleStart);
+  $("practiceStart").addEventListener("click", handleStart);
+  $("exitGame").addEventListener("click", returnToMenu);
+
+  window.setTimeout(() => { $("splash").hidden = true; }, 1500);
+  connectSensor();
+})();
+</script>
+</body>
+</html>
