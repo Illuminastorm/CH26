@@ -1699,7 +1699,14 @@
     clearTimeout(reconnectTimer);
     const protocol = location.protocol === "https:" ? "wss:" : "ws:";
     try {
-      gameSocket = new WebSocket(protocol + "//" + location.host + "/monitor");
+      const params = new URLSearchParams(window.location.search);
+      const session = params.get('session') || '';
+      const token = params.get('token') || '';
+      const q = new URLSearchParams();
+      if (session) q.set('session', session);
+      if (token) q.set('token', token);
+      const qs = q.toString();
+      gameSocket = new WebSocket(protocol + "//" + location.host + "/monitor" + (qs ? '?' + qs : ''));
     } catch {
       connected = false;
       slots = [false, false];

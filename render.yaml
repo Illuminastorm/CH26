@@ -3,7 +3,7 @@ services:
     name: andescendants
     runtime: node
     plan: free
-    buildCommand: ""
+    buildCommand: npm install
     startCommand: node server/cloud.mjs
     healthCheckPath: /
     envVars:

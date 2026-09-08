@@ -7,7 +7,15 @@ export function createTransport({ onState, onOpen }) {
   let sent = 0;
 
   function connect() {
-    ws = new WebSocket(`wss://${location.host}/phone`);
+    const params = new URLSearchParams(window.location.search);
+    const session = params.get('session') || '';
+    const token = params.get('token') || '';
+    const q = new URLSearchParams();
+    if (session) q.set('session', session);
+    if (token) q.set('token', token);
+    const qs = q.toString();
+    const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${scheme}//${location.host}/phone` + (qs ? '?' + qs : ''));
 
     ws.onopen = () => {
       retry = 500;

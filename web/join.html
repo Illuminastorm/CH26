@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a1a">
+<title>Punch Off — JOIN</title>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
+  :root {
+    color-scheme: dark;
+    --background: #0a0a1a;
+    --foreground: #f0f0f0;
+    --surface: #0d0d2a;
+    --surface-active: #1a1a5e;
+    --border: #3a3a8e;
+    --accent: #f8d800;
+    --accent-dark: #7a5000;
+    --muted: #8888cc;
+    --highlight: #76d7ff;
+    --primary: #e83030;
+    --primary-shadow: #7a0000;
+  }
+
+  * { box-sizing: border-box; }
+  html { min-height: 100%; background: var(--background); }
+  body {
+    min-height: 100vh;
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: "Press Start 2P", ui-monospace, "Cascadia Code", monospace;
+    font-size: 12px;
+    overflow-x: hidden;
+  }
+  button, input { font: inherit; color: inherit; }
+  button { -webkit-tap-highlight-color: transparent; }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 54px; padding: 10px clamp(14px, 3vw, 34px);
+    border-bottom: 4px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 90%, #000);
+  }
+  .brand { color: var(--accent); font-size: clamp(10px, 1.8vw, 15px); letter-spacing: 1px; }
+
+  .stage { position: relative; display: grid; place-items: center; padding: clamp(24px, 5vw, 48px); min-height: calc(100vh - 54px); }
+  .grid-bg {
+    position: fixed; inset: 0; pointer-events: none; opacity: .13;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .panel {
+    position: relative; z-index: 1;
+    width: min(480px, 100%);
+    padding: clamp(22px, 4vw, 38px);
+    border: 4px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 92%, #000);
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, .35);
+    text-align: center;
+  }
+  h1 { margin: 0 0 6px; color: var(--accent); font-size: clamp(16px, 3vw, 24px); line-height: 1.5; text-shadow: 4px 4px 0 var(--accent-dark); }
+  .sub { margin: 0 0 26px; color: var(--highlight); font-size: 7px; line-height: 2; }
+
+  #code {
+    width: 100%; max-width: 260px;
+    padding: 14px;
+    color: var(--accent);
+    background: var(--background);
+    border: 3px solid var(--border);
+    text-align: center;
+    font-size: 24px;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    caret-color: var(--highlight);
+  }
+  #joinBtn {
+    display: block; width: 100%; max-width: 260px; margin: 18px auto 0;
+    padding: 16px;
+    color: #fff;
+    background: var(--primary);
+    border: 0;
+    box-shadow: 4px 4px 0 var(--primary-shadow);
+    cursor: pointer;
+    font-size: 9px;
+    line-height: 1.5;
+  }
+  #joinBtn:disabled { opacity: .5; }
+
+  #notice { margin-top: 20px; min-height: 16px; color: var(--highlight); font-size: 7px; }
+  #notice.error { color: var(--primary); }
+  .foot { margin-top: 24px; color: var(--muted); font-size: 6px; line-height: 1.9; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="grid-bg" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="brand">GO-TION ARCADE</div>
+    <div class="brand" style="color:var(--highlight)">JOIN GAME</div>
+  </header>
+
+  <main class="stage">
+    <section class="panel">
+      <h1>ENTER JOIN CODE</h1>
+      <p class="sub">Type the 4-character code shown on the host screen.</p>
+
+      <label hidden for="code">Join code</label>
+      <input id="code" maxlength="4" autocomplete="off" autocapitalize="characters" autofocus placeholder="----">
+      <button type="button" id="joinBtn">JOIN GAME</button>
+
+      <p id="notice"></p>
+      <p class="foot">The link you receive stops working when the session ends.</p>
+    </section>
+  </main>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const notice = (text, error) => {
+    $("notice").textContent = text;
+    $("notice").className = error ? "error" : "";
+  };
+
+  async function join() {
+    const code = $("code").value.trim();
+    if (code.length !== 4) { notice("Enter the 4-character code.", true); return; }
+    $("joinBtn").disabled = true;
+    notice("Joining…");
+    try {
+      const res = await fetch("/j/" + encodeURIComponent(code.toUpperCase()));
+      if (res.redirected && res.ok === false) { /* 3xx */ }
+      if (res.ok) {
+        // 302 -> follow to the phone page with session+token
+        window.location.href = res.url;
+        return;
+      }
+      if (res.status === 404) { notice("Invalid or expired code.", true); }
+      else notice("Join failed (" + res.status + ").", true);
+      $("joinBtn").disabled = false;
+    } catch (e) {
+      notice("Could not reach the game server.", true);
+      $("joinBtn").disabled = false;
+    }
+  }
+
+  $("joinBtn").onclick = join;
+  $("code").addEventListener("keydown", (e) => { if (e.key === "Enter") join(); });
+})();
+</script>
+</body>
+</html>
