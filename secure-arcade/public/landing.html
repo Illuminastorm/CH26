@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0a0a1a">
+  <title>GO-TION Secure Arcade</title>
+  <link rel="stylesheet" href="/arcade.css">
+</head>
+<body>
+  <div class="arcade-shell">
+    <div class="starfield"></div>
+    <div class="grid-bg"></div>
+    <header class="topbar">
+      <div class="brand">GO-TION ARCADE</div>
+      <div class="top-status"><i class="indicator good"></i><span>SECURE SESSION MODE</span></div>
+    </header>
+    <div class="marquee-wrap"><div class="marquee">SECURE ROOM BRIDGE // PHONE MOTION RELAY // EPHEMERAL SESSION DATA // </div></div>
+
+    <main class="screen tight">
+      <h1 class="screen-heading">CREATE SESSION</h1>
+      <p class="screen-subheading">START A ROOM FOR THIS GAME. PLAYER LINKS EXPIRE AFTER FIVE MINUTES AND ARE ACCEPTED ONCE.</p>
+      <section class="panel">
+        <div class="panel-inner">
+          <h2 class="panel-title">HOST CONSOLE</h2>
+          <p class="panel-copy">THIS BROWSER BECOMES THE ROOM OWNER. IT CAN ISSUE ONE-TIME PHONE LINKS AND OPEN THE ROOM MONITOR.</p>
+          <button class="button full-button" id="create" type="button">CREATE SECURE ROOM</button>
+          <p class="notice" id="notice" role="status" aria-live="polite">READY FOR A NEW SESSION.</p>
+          <div class="privacy-note"><strong>PRIVACY:</strong> SENSOR SAMPLES ARE RELAYED ONLY TO THE ACTIVE ROOM. THIS EDITION DOES NOT WRITE SENSOR DATA, DEVICE DETAILS, OR REPLAY HISTORY TO DISK.</div>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">SECURE ARCADE EDITION // USE THE HOST CONSOLE TO ISSUE PHONE ACCESS</footer>
+  </div>
+  <script type="module" src="/landing.js"></script>
+</body>
+</html>

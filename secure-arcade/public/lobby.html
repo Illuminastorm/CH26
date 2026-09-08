@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0a0a1a">
+  <title>GO-TION Room Console</title>
+  <link rel="stylesheet" href="/arcade.css">
+</head>
+<body>
+  <div class="arcade-shell">
+    <div class="starfield"></div>
+    <div class="grid-bg"></div>
+    <header class="topbar">
+      <div class="brand">GO-TION ARCADE</div>
+      <div class="top-status"><i class="indicator good" id="hostLight"></i><span id="hostStatus">HOST CONSOLE ACTIVE</span></div>
+    </header>
+    <div class="marquee-wrap"><div class="marquee">ISSUE A PLAYER LINK // LINK IS SINGLE-USE // ROOM STREAMS STAY ISOLATED // </div></div>
+
+    <main class="screen">
+      <h1 class="screen-heading">ROOM CONSOLE</h1>
+      <p class="screen-subheading">ISSUE A SEPARATE ONE-TIME LINK FOR EACH PLAYER. COPY IT TO THE PHONE THAT WILL CONTROL THAT PLAYER.</p>
+      <section class="panel">
+        <div class="panel-inner">
+          <h2 class="panel-title">ACTIVE ROOM ID</h2>
+          <div class="room-code" id="roomId">LOADING</div>
+          <div class="session-grid">
+            <section class="player-card" id="card1">
+              <div class="card-kicker">PLAYER 1</div>
+              <p class="card-state" id="state1">CHECKING SLOT</p>
+              <div class="join-output" id="output1" hidden>
+                <div class="join-label" id="expiry1">LINK ACTIVE</div>
+                <input class="join-link" id="link1" aria-label="Player 1 join link" readonly>
+                <div class="copy-row"><button class="secondary-button" id="copy1" type="button">COPY LINK</button></div>
+              </div>
+              <div class="copy-row"><button class="button" id="issue1" type="button">ISSUE PLAYER 1 LINK</button></div>
+            </section>
+            <section class="player-card" id="card2">
+              <div class="card-kicker">PLAYER 2</div>
+              <p class="card-state" id="state2">CHECKING SLOT</p>
+              <div class="join-output" id="output2" hidden>
+                <div class="join-label" id="expiry2">LINK ACTIVE</div>
+                <input class="join-link" id="link2" aria-label="Player 2 join link" readonly>
+                <div class="copy-row"><button class="secondary-button" id="copy2" type="button">COPY LINK</button></div>
+              </div>
+              <div class="copy-row"><button class="button" id="issue2" type="button">ISSUE PLAYER 2 LINK</button></div>
+            </section>
+          </div>
+          <p class="notice" id="notice" role="status" aria-live="polite">LOADING ROOM STATUS.</p>
+          <div class="button-row">
+            <a class="button" id="openArena" href="/">OPEN ROOM MONITOR</a>
+            <button class="danger-button" id="end" type="button">END SESSION</button>
+          </div>
+          <div class="privacy-note"><strong>LINK POLICY:</strong> EACH LINK EXPIRES AFTER FIVE MINUTES AND CAN BE USED ONCE. RENEWING A LINK REPLACES THE PREVIOUS LINK FOR THAT PLAYER.</div>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">HOST-ONLY MONITOR ACCESS // NO SENSOR LOGGING // NO SAMPLE REPLAY</footer>
+  </div>
+  <script type="module" src="/lobby.js"></script>
+</body>
+</html>

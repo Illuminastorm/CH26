@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0a0a1a">
+  <title>GO-TION Phone Controller</title>
+  <link rel="stylesheet" href="/arcade.css">
+</head>
+<body>
+  <div class="arcade-shell">
+    <div class="starfield"></div>
+    <div class="grid-bg"></div>
+    <header class="topbar">
+      <div class="brand">GO-TION CONTROLLER</div>
+      <div class="top-status"><i class="indicator" id="phoneLight"></i><span id="phoneStatus">VALIDATING LINK</span></div>
+    </header>
+    <div class="marquee-wrap"><div class="marquee">ONE-TIME PHONE ACCESS // START SENSOR WHEN READY // NO MOTION LOGGING // </div></div>
+
+    <main class="screen tight phone-screen">
+      <h1 class="screen-heading">PHONE LINK</h1>
+      <section class="panel">
+        <div class="panel-inner">
+          <p class="phone-status" id="linkState">VALIDATING SECURE LINK</p>
+          <div class="phone-room" id="roomId">ROOM LOADING</div>
+          <p class="phone-slot" id="playerSlot">PLAYER LOADING</p>
+          <button class="button full-button" id="sensorButton" type="button" disabled>START SENSOR</button>
+          <div class="axes phone-axes">
+            <div class="axis"><label>X</label><output id="x">0.00</output></div>
+            <div class="axis"><label>Y</label><output id="y">0.00</output></div>
+            <div class="axis"><label>Z</label><output id="z">0.00</output></div>
+          </div>
+          <p class="notice" id="notice" role="status" aria-live="polite">WAITING FOR ROOM LINK.</p>
+          <div class="privacy-note"><strong>PRIVACY:</strong> THIS CONTROLLER SENDS LIVE MOTION ONLY WHILE YOU PRESS START. THE SECURE BRIDGE DOES NOT STORE OR LOG MOTION SAMPLES.</div>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">PHONE ACCESS IS BOUND TO THIS ROOM AND PLAYER SLOT</footer>
+  </div>
+  <script type="module" src="/phone.js"></script>
+</body>
+</html>

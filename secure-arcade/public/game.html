@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0a0a1a">
+  <title>GO-TION Live Arena</title>
+  <link rel="stylesheet" href="/arcade.css">
+</head>
+<body>
+  <div class="arcade-shell">
+    <div class="starfield"></div>
+    <div class="grid-bg"></div>
+    <header class="topbar">
+      <div class="brand">GO-TION LIVE ARENA</div>
+      <div class="top-status"><i class="indicator" id="monitorLight"></i><span id="monitorStatus">CONNECTING MONITOR</span></div>
+    </header>
+    <div class="marquee-wrap"><div class="marquee">ROOM-SCOPED MOTION ONLY // LIVE VALUES ARE NOT RECORDED // HOST MONITOR ACCESS // </div></div>
+
+    <main class="screen">
+      <h1 class="screen-heading">LIVE ARENA</h1>
+      <p class="screen-subheading">ROOM <span id="roomId">LOADING</span> // CURRENT PHONE MOTION ONLY // NO HISTORY</p>
+      <div class="arena-grid">
+        <section class="panel fighter-panel" id="fighter1">
+          <div class="fighter-header"><span class="fighter-name">PLAYER 1</span><span class="fighter-state" id="fighterState1">WAITING</span></div>
+          <div class="axes">
+            <div class="axis"><label>X</label><output id="x1">0.00</output></div>
+            <div class="axis"><label>Y</label><output id="y1">0.00</output></div>
+            <div class="axis"><label>Z</label><output id="z1">0.00</output></div>
+          </div>
+          <div class="power-wrap"><div class="power-label"><span>LIVE MOTION</span><span id="powerText1">0.00 m/s2</span></div><div class="power-track"><div class="power-fill" id="power1"></div></div></div>
+        </section>
+        <section class="panel fighter-panel" id="fighter2">
+          <div class="fighter-header"><span class="fighter-name">PLAYER 2</span><span class="fighter-state" id="fighterState2">WAITING</span></div>
+          <div class="axes">
+            <div class="axis"><label>X</label><output id="x2">0.00</output></div>
+            <div class="axis"><label>Y</label><output id="y2">0.00</output></div>
+            <div class="axis"><label>Z</label><output id="z2">0.00</output></div>
+          </div>
+          <div class="power-wrap"><div class="power-label"><span>LIVE MOTION</span><span id="powerText2">0.00 m/s2</span></div><div class="power-track"><div class="power-fill" id="power2"></div></div></div>
+        </section>
+      </div>
+      <p class="notice" id="notice" role="status" aria-live="polite">ONLY NEW SAMPLES ARE SHOWN. NO PRIOR SENSOR DATA IS LOADED.</p>
+      <a class="back-link" id="backToLobby" href="/">BACK TO ROOM CONSOLE</a>
+    </main>
+    <footer class="footer">CURRENT SAMPLE DISPLAY ONLY // MONITOR CREDENTIAL NEVER LEAVES THE HOST BROWSER</footer>
+  </div>
+  <script type="module" src="/game.js"></script>
+</body>
+</html>
